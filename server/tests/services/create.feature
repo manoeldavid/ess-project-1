@@ -1,39 +1,60 @@
-Feature: Criar música
+Feature: Cadastro de músicas
 
-  Scenario: Criação de música com sucesso
-    Given o corpo da requisição contém todos os campos válidos
-    When uma requisição "POST" for enviada para "/musics"
-    Then o status da resposta deve ser "201"
-    And o JSON da resposta deve conter a mensagem "Música criada com sucesso!"
-    And o objeto de música deve conter o campo "musicId"
+	Scenario: Cadastrar nova música com dados válidos
+	  Given a música "Imagine" do artista "John Lennon" não existe na plataforma
+	  When uma requisição "POST" é enviada para "/musics"
+	  And o corpo desta requisição contém os seguintes campos:
+	    | title   | artist      | album   | releaseYear | duration | url                               | platforms       | cover                                  |
+	    | Imagine | John Lennon | Imagine | 1971        | 03:04    | https://audio.example/imagine.mp3 | Spotify, Deezer | ./server/assets/img/longlive.jpg       |
+	  Then estes dados devem ser salvos no banco de dados
+	  And o status da resposta deve ser "201"
+	  And a mensagem "Música criada com sucesso!" deve estar presente na resposta
 
   Scenario: Tentativa de criação com campo obrigatório faltando
-    Given o corpo da requisição está sem o campo "title"
-    When uma requisição "POST" for enviada para "/musics"
-    Then o status da resposta deve ser "400"
-    And a mensagem da resposta deve ser "Por favor, preencha todos os campos."
+	  Given a música "Imagine" do artista "John Lennon" não existe na plataforma
+	  When uma requisição "POST" é enviada para "/musics"
+	  And o corpo desta requisição contém os seguintes campos:
+	    | title | artist      | album   | releaseYear | duration | url                               | platforms       | cover                                  |
+	    |       | John Lennon | Imagine | 1971        | 03:04    | https://audio.example/imagine.mp3 | Spotify, Deezer | ./server/assets/img/longlive.jpg       |
+	  Then o sistema rejeita o cadastro
+	  And o status da resposta deve ser "400"
+	  And a mensagem "Por favor, preencha todos os campos." deve estar presente na resposta
 
-  Scenario: Tentativa de criação com capa ausente
-    Given o corpo da requisição está sem o campo "cover"
-    When uma requisição "POST" for enviada para "/musics"
-    Then o status da resposta deve ser "400"
-    And a mensagem da resposta deve ser "A capa da música é obrigatória."
+  Scenario: Tentar cadastrar música sem capa
+	  Given a música "Imagine" do artista "John Lennon" não existe na plataforma
+	  When uma requisição "POST" é enviada para "/musics"
+	  And o corpo desta requisição contém os seguintes campos:
+	    | title   | artist      | album   | releaseYear | duration | url                               | platforms       | cover |
+	    | Imagine | John Lennon | Imagine | 1971        | 03:04    | https://audio.example/imagine.mp3 | Spotify, Deezer |       |
+	  Then o sistema rejeita o cadastro
+	  And o status da resposta deve ser "400"
+	  And a mensagem "A capa da música é obrigatória." deve estar presente na resposta
 
-  Scenario: Duração da música com formato inválido
-    Given o corpo da requisição tem a duração no formato "5:17"
-    When uma requisição "POST" for enviada para "/musics"
-    Then o status da resposta deve ser "400"
-    And a mensagem da resposta deve ser "A duração deve estar no formato mm:ss"
+  Scenario: Tentar cadastrar música com duração mal formatada
+	  Given a música "Imagine" do artista "John Lennon" não existe na plataforma
+	  When uma requisição "POST" é enviada para "/musics"
+	  And o corpo desta requisição contém os seguintes campos:
+	    | title   | artist      | album   | releaseYear | duration | url                               | platforms       | cover                                  |
+	    | Imagine | John Lennon | Imagine | 1971        | 3:04     | https://audio.example/imagine.mp3 | Spotify, Deezer | ./server/assets/img/longlive.jpg       |
+	  Then o sistema rejeita o cadastro
+	  And o status da resposta deve ser "400"
+	  And a mensagem "A duração deve estar no formato mm:ss" deve estar presente na resposta
 
-  Scenario: Ano de lançamento com formato inválido
-    Given o corpo da requisição tem o campo "releaseYear" com valor "20aa"
-    When uma requisição "POST" for enviada para "/musics"
-    Then o status da resposta deve ser "400"
-    And a mensagem da resposta deve ser "O ano de lançamento deve conter 4 dígitos numéricos."
+  Scenario: Tentar cadastrar música com ano inválido
+	  Given a música "Imagine" do artista "John Lennon" não existe na plataforma
+	  When uma requisição "POST" é enviada para "/musics"
+	  And o corpo desta requisição contém os seguintes campos:
+	    | title   | artist      | album   | releaseYear | duration | url                               | platforms       | cover                                  |
+	    | Imagine | John Lennon | Imagine | 20aa        | 03:04    | https://audio.example/imagine.mp3 | Spotify, Deezer | ./server/assets/img/longlive.jpg       |
+	  Then o sistema rejeita o cadastro
+	  And a resposta retorna status "400"
+	  And a mensagem "O ano de lançamento deve conter 4 dígitos numéricos." deve estar presente na resposta
 
-  Scenario: Música já cadastrada no sistema
-    Given já existe uma música com o título "Long Live" e artista "Taylor Swift"
-    And o corpo da requisição repete esse título e artista
-    When uma requisição "POST" for enviada para "/musics"
-    Then o status da resposta deve ser "400"
-    And a mensagem da resposta deve ser "Essa música já está cadastrada no sistema."
+  Scenario: Cadastrar música já existente
+	  Given já existe no sistema a música "Imagine" do artista "John Lennon"
+	  When uma requisição "POST" é enviada para "/musics" com os seguintes dados:
+	    | title   | artist      | album   | releaseYear | duration | url                               | platforms       | cover                                  |
+	    | Imagine | John Lennon | Imagine | 1971        | 03:04    | https://audio.example/imagine.mp3 | Spotify, Deezer | ./server/assets/img/longlive.jpg       |
+	  Then o sistema rejeita o cadastro
+	  And a resposta retorna status "400"
+	  And a mensagem "Essa música já está cadastrada no sistema." deve estar presente na resposta

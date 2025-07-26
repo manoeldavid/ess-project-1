@@ -1,11 +1,14 @@
 Feature: Deletar música
 
-  Scenario: deletar uma música existente
-    Given existe uma música com musicId "007"
-    When o método deleteMusic for chamado com id "007"
-    Then o JSON da resposta deve conter a mensagem "Música removida com sucesso."
+  Scenario: Deletar uma música existente com sucesso
+    Given existe uma música cadastrada com musicId "007"
+    When uma requisição "DELETE" é enviada para "/musics/007"
+    Then o status da resposta deve ser "200"
+    And a mensagem "Música removida com sucesso." deve estar presente na resposta
+    And a música com id "007" não deve mais existir no banco de dados
 
-  Scenario: tentar deletar uma música inexistente
+  Scenario: Tentar deletar uma música inexistente
     Given não existe nenhuma música com musicId "999"
-    When o método deleteMusic for chamado com id "999"
-    Then um erro deve ser lançado com a mensagem "Música não encontrada para remoção."
+    When uma requisição "DELETE" é enviada para "/musics/999"
+    Then o status da resposta deve ser "404"
+    And a mensagem "Música não encontrada para remoção." deve estar presente na resposta
